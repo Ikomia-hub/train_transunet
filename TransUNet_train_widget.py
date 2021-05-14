@@ -79,13 +79,6 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.baseLearningRateSpinBox.setSingleStep(0.0001)
         self.baseLearningRateSpinBox.setValue(self.parameters.cfg["baseLearningRate"])
 
-        patchSizeLabel = QLabel("Patch size:")
-        self.patchSizeLabelSpinBox = QSpinBox()
-        self.patchSizeLabelSpinBox.setRange(1,64)
-        self.patchSizeLabelSpinBox.setSingleStep(1)
-        self.patchSizeLabelSpinBox.setValue(self.parameters.cfg["patchSize"])
-
-
         # Set widget layout
 
         self.gridLayout.addWidget(inputSizeLabel, 0, 0, 1, 1)
@@ -100,14 +93,17 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.gridLayout.addWidget(self.evalPeriodSpinBox, 4, 1, 1, 2)
         self.gridLayout.addWidget(baseLearningRateLabel, 5, 0, 1, 1)
         self.gridLayout.addWidget(self.baseLearningRateSpinBox, 5, 1, 1, 2)
-        self.gridLayout.addWidget(patchSizeLabel,6,0,1,1)
-        self.gridLayout.addWidget(self.patchSizeLabelSpinBox,6,1,1,2)
 
         # Output folder
         self.browse_out_folder = utils.append_browse_file(self.gridLayout, label="Output folder",
                                                           path=self.parameters.cfg["outputFolder"],
                                                           tooltip="Select folder",
                                                           mode=QFileDialog.Directory)
+
+        self.browse_expert_mode = utils.append_browse_file(self.gridLayout, label="Advanced yaml config",
+                                                           path=self.parameters.cfg["expertMode"],
+                                                           tooltip="Select yaml file",
+                                                           mode=QFileDialog.ExistingFile)
 
         self.setLayout(layout_ptr)
 
@@ -122,8 +118,9 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.parameters.cfg["evalPeriod"] = self.evalPeriodSpinBox.value()
         self.parameters.cfg["splitTrainTest"] = self.splitTrainTestSpinBox.value()
         self.parameters.cfg["outputFolder"] = self.browse_out_folder.path
-        self.parameters.cfg["patchSize"] = self.patchSizeLabelSpinBox.value()
         self.parameters.cfg["baseLearningRate"] = self.baseLearningRateSpinBox.value()
+        self.parameters.cfg["outputFolder"] = self.browse_out_folder.path
+        self.parameters.cfg["expertMode"] = self.browse_expert_mode.path
         # Send signal to launch the process
         self.emitApply(self.parameters)
 
