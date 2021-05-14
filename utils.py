@@ -20,6 +20,7 @@ from math import ceil
 from pathlib import Path
 import datetime
 
+
 def rgb2mask(img, color2index):
     W = np.power(256, [[0], [1], [2]])
     img_id = img.dot(W).squeeze(-1)
@@ -36,22 +37,28 @@ def rgb2mask(img, color2index):
     return mask
 
 
-def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations, snapshot_path, ikDataset, pretrain,
-               split_train_test, eval_period, stop, step_fct,writer, seed=10):
-
+def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
+    batch_size = cfg.batch_size
+    img_size = cfg.img_size
+    num_classes = cfg.num_classes
+    base_lr = cfg.base_lr
+    max_iterations = cfg.max_iter
+    snapshot_path = cfg.output_path
+    split_train_test = cfg.split_train_test
+    eval_period = cfg.eval_period
     n_gpu = 1
     batch_size = batch_size * n_gpu
 
-    #empirical values for warmup
-    warmup_iters = max_iterations//3
+    # empirical values for warmup
+    warmup_iters = max_iterations // 3
     warmup_factor = 0.001
     transformations = [Nphwc2tensorchw(), Resize(img_size, img_size)]
-    if pretrain:
-        mean = np.array([123.675, 116.280, 103.530],dtype=np.float)
-        std = np.array([58.395, 57.120, 57.375],dtype=np.float)
+    if cfg.pretrain is not None:
+        mean = np.array([123.675, 116.280, 103.530], dtype=np.float)
+        std = np.array([58.395, 57.120, 57.375], dtype=np.float)
         norm = Normalize(mean=mean, std=std)
-        #norm = NormalizeFromPaper()
-        unorm = UnNormalize(mean=mean,std=std)
+        # norm = NormalizeFromPaper()
+        unorm = UnNormalize(mean=mean, std=std)
         # preprocess input for resnet pretrained on imagenet
         transformations.append(norm)
 
@@ -80,8 +87,8 @@ def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations
     if n_gpu > 1:
         model = nn.DataParallel(model)
     model.train()
-    #ce_loss = CrossEntropyLoss()
-    #dice_loss = DiceLoss(num_classes)
+    # ce_loss = CrossEntropyLoss()
+    # dice_loss = DiceLoss(num_classes)
     hard_pixel_loss = DeepLabCE(top_k_percent_pixels=0.2)
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -95,7 +102,7 @@ def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations
         if stop():
             break
         for i_batch, sampled_batch in enumerate(trainloader):
-            if stop() or iter_num > max_iterations-1:
+            if stop() or iter_num > max_iterations - 1:
                 break
             image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
@@ -107,7 +114,7 @@ def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_ = get_lr(base_lr,iter_num,max_iterations,warmup_iters,warmup_factor)
+            lr_ = get_lr(base_lr, iter_num, max_iterations, warmup_iters, warmup_factor)
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr_
 
@@ -121,17 +128,17 @@ def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations
 
             if iter_num % 20 == 0:
                 image = image_batch[0, 0, :, :, :]
-                if pretrain == True:
+                if cfg.pretrain is not None:
                     image = unorm(image.float())
 
-                writer.add_image('train/Image', image/255, iter_num,dataformats='CHW')
+                writer.add_image('train/Image', image / 255, iter_num, dataformats='CHW')
                 outputs = torch.argmax(torch.softmax(outputs, dim=1), dim=1, keepdim=True)
                 writer.add_image('train/Prediction', outputs[0, ...] * 50, iter_num)
                 labs = label_batch[0, ...].unsqueeze(0)
                 writer.add_image('train/GroundTruth', labs * 50, iter_num)
 
             if iter_num % eval_period == 0 and len(testloader) > 0:
-                _N = len(ikDataset["metadata"]["category_names"])
+                _N = num_classes
                 conf_matrix = np.zeros((_N, _N), dtype=np.int64)
 
                 for i_batch, sampled_batch in enumerate(testloader):
@@ -159,8 +166,8 @@ def my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iterations
                 writer.add_scalar('info/macc', macc, iter_num)
                 writer.add_scalar('info/miou', miou, iter_num)
 
-                for class_iou,class_name in zip(iou,ikDataset["metadata"]["category_names"].values()):
-                    writer.add_scalar('info/iou-'+class_name, class_iou, iter_num)
+                for class_iou, class_name in zip(iou, ikDataset["metadata"]["category_names"].values()):
+                    writer.add_scalar('info/iou-' + class_name, class_iou, iter_num)
 
     save_mode_path = os.path.join(snapshot_path, 'iter_' + str(iter_num) + '.pth')
     torch.save(model.state_dict(), save_mode_path)
@@ -178,28 +185,31 @@ class Normalize(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        #image = transforms.functional.normalize(image, mean=self.mean, std=self.std)
+        # image = transforms.functional.normalize(image, mean=self.mean, std=self.std)
         # image = (image-image.min())/(image.max()-image.min())
         for t, m, s in zip(image, self.mean, self.std):
             t.sub_(m).div_(s)
         sample = {'image': image, 'label': label}
         return sample
 
+
 class NormalizeFromPaper(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        image = (image-image.min())/(image.max()-image.min())
+        image = (image - image.min()) / (image.max() - image.min())
 
         sample = {'image': image, 'label': label}
         return sample
 
-def get_lr(base_lr,iter,max_iter,warmup_iters=None,warmup_factor=None):
+
+def get_lr(base_lr, iter, max_iter, warmup_iters=None, warmup_factor=None):
     if iter >= warmup_iters or warmup_iters is None:
         factor = 1
     else:
-        alpha = iter/warmup_iters
-        factor = warmup_factor*(1-alpha) + alpha
-    return base_lr*factor*(1.0 - iter / max_iter) ** 0.9
+        alpha = iter / warmup_iters
+        factor = warmup_factor * (1 - alpha) + alpha
+    return base_lr * factor * (1.0 - iter / max_iter) ** 0.9
+
 
 class UnNormalize(object):
     def __init__(self, mean, std):
@@ -217,6 +227,7 @@ class UnNormalize(object):
             t.mul_(s).add_(m)
             # The normalize code -> t.sub(m).div(s)
         return tensor
+
 
 class Resize(object):
     def __init__(self, height, width):
@@ -348,6 +359,3 @@ class DiceLoss(nn.Module):
             class_wise_dice.append(1.0 - dice.item())
             loss += dice * weight[i]
         return loss / self.n_classes
-
-
-

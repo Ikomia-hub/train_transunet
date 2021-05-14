@@ -30,6 +30,8 @@ from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from ml_collections import ConfigDict
+import yaml
 
 # --------------------
 # - Class to handle the process parameters
@@ -52,6 +54,7 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
         self.cfg["outputFolder"] = ""
         self.cfg["baseLearningRate"] = 0.01
         self.cfg["pretrain"] = True
+        self.cfg["expertMode"] = ""
 
     def setParamMap(self, paramMap):
         # Set parameters values from Ikomia application
@@ -67,6 +70,7 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
         self.cfg["outputFolder"] = paramMap["outputFolder"]
         self.cfg["baseLearningRate"] = float(paramMap["baseLearningRate"])
         self.cfg["pretrain"] = bool(paramMap["pretrain"])
+        self.cfg["expertMode"] = paramMap["expertMode"]
 
 # --------------------
 # - Class which implements the process
@@ -100,8 +104,10 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         self.beginTaskRun()
 
         self.stop_train = False
+        self.problem = False
         dir_path = os.path.dirname(__file__)
-        pretrained_path= Path(dir_path+"/networks/"+"R50+ViT-B_16.npz")
+        pretrained_path= os.fspath(Path(dir_path+"/networks/"+"R50+ViT-B_16.npz"))
+        print(pretrained_path)
         if not(os.path.isfile(pretrained_path)):
             import requests
             print('Downloading weights')
@@ -117,29 +123,15 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
                     file.write(data)
             progress_bar.close()
             if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
-                print("ERROR, something went wrong")
-
+                print("ERROR, something went wrong during downloading")
+                self.problem = True
             print('Weights downloaded')
 
         input = self.getInput(0)
-
-        # Get parameters :
-        param = self.getParam()
-        batch_size = param.cfg["batchSize"]
-        img_size = param.cfg["inputSize"]
-        max_iter = param.cfg["maxIter"]
-        split_train_test = param.cfg["splitTrainTest"]/100
-        eval_period = param.cfg["evalPeriod"]
-        pretrain = param.cfg["pretrain"]
-        base_lr = param.cfg["baseLearningRate"]
-        patch_size = param.cfg["patchSize"]
-        if len(input.data) > 0:
-            str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
-            output_path = os.path.join(dir_path,"output",str_datetime)
-            if not os.path.exists(output_path):
-                os.makedirs(output_path)
-            config_vit = CONFIGS_ViT_seg['R50-ViT-B_16']
-
+        if len(input.data) == 0:
+            print("ERROR, there is no input dataset")
+            self.problem = True
+        else:
             if not(input.has_bckgnd_class):
                 tmp_dict = {0:"background"}
                 for k,name in input.data["metadata"]["category_names"].items():
@@ -148,14 +140,50 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
                 input.has_bckgnd_class = True
             num_classes = len(input.data["metadata"]["category_names"])
 
+        # Get parameters :
+        param = self.getParam()
+        expert_mode = param.cfg["expertMode"]
+
+        if os.path.isfile(expert_mode):
+            with open(expert_mode, 'r') as file:
+                str = yaml.load(file, Loader=yaml.FullLoader)
+                config_vit = ConfigDict(str)
+                pretrained_path = config_vit.pretrained_path
+                output_path = config_vit.output_path
+        else:
+            config_vit = CONFIGS_ViT_seg['R50-ViT-B_16']
+            config_vit.pretrained_path = pretrained_path
+            config_vit.batch_size = param.cfg["batchSize"]
+            config_vit.img_size = param.cfg["inputSize"]
+            config_vit.max_iter = param.cfg["maxIter"]
+            config_vit.split_train_test = param.cfg["splitTrainTest"] / 100
+            config_vit.eval_period = param.cfg["evalPeriod"]
+            config_vit.base_lr = param.cfg["baseLearningRate"]
+            config_vit.patch_size = 16
             config_vit.n_classes = num_classes
             config_vit.n_skip = 3
-            config_vit.patches_size = patch_size
-            config_vit.patches.grid = (int(img_size / config_vit.patches_size), int(img_size / config_vit.patches_size))
-            config_vit.class_names = [name for k,name in input.data["metadata"]["category_names"].items()]
-            model = ViT_seg(config_vit, img_size=img_size, num_classes=config_vit.n_classes).cuda()
+            config_vit.patches.grid = (int(config_vit.img_size / config_vit.patch_size), int(config_vit.img_size / config_vit.patch_size))
+            config_vit.class_names = [name for k, name in input.data["metadata"]["category_names"].items()]
+            str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
+            if os.path.isdir(param.cfg["outputFolder"]):
+                output_path = os.path.join(param.cfg["outputFolder"], str_datetime)
+            else:
+                output_path = os.path.join(dir_path, "output", str_datetime)
 
-            if pretrain == True:
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+            config_vit.output_path = output_path
+
+        if config_vit.img_size % config_vit.patch_size != 0:
+            print("ERROR, image size must be divisible by patch size")
+            self.problem = True
+
+        if not(self.problem):
+
+
+            model = ViT_seg(config_vit, img_size=config_vit.img_size, num_classes=config_vit.n_classes).cuda()
+
+            if os.path.isfile(config_vit.pretrained_path) :
                 with np.load(pretrained_path) as data:
                     pretrained_names = data.files
                     pretrained_dict = {}
@@ -166,8 +194,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
 
             tb_logdir = Path(self.getTensorboardLogDir()+"/"+param.cfg["modelName"]+"/"+str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
-            utils.my_trainer(model, batch_size, img_size, num_classes, base_lr, max_iter, output_path, input.data, pretrain,
-                       split_train_test, eval_period,self.get_stop,self.emitStepProgress,tb_writer)
+            utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
             with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
 
