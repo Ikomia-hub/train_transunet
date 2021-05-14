@@ -22,7 +22,7 @@ import copy
 from ikomia.dnn import datasetio
 from ikomia.dnn import dnntrain
 import os
-import utils
+import transunet_utils
 from pathlib import Path
 import numpy as np
 from networks.vit_seg_modeling import VisionTransformer as ViT_seg
@@ -194,7 +194,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
 
             tb_logdir = Path(self.getTensorboardLogDir()+"/"+param.cfg["modelName"]+"/"+str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
-            utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
+            transunet_utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
             with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
 
