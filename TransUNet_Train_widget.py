@@ -109,9 +109,7 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
 
     def onApply(self):
         # Apply button clicked slot
-
         # Get parameters from widget
-        # Example : self.parameters.windowSize = self.spinWindowSize.value()
         self.parameters.cfg["inputSize"] = self.inputSizeSpinBox.value()
         self.parameters.cfg["batch_size"] = self.batchSizeSpinBox.value()
         self.parameters.cfg["maxIter"] = self.maxIterSpinBox.value()

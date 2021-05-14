@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ikomia import core, dataprocess
+from ikomia import dataprocess
 import copy
 # Your imports below
 from ikomia.dnn import datasetio
@@ -33,6 +33,7 @@ from tqdm import tqdm
 from ml_collections import ConfigDict
 import yaml
 
+
 # --------------------
 # - Class to handle the process parameters
 # - Inherits PyCore.CProtocolTaskParam from Ikomia API
@@ -42,7 +43,6 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
     def __init__(self):
         dnntrain.TrainParam.__init__(self)
         # Place default value initialization here
-        # Example : self.windowSize = 25
         self.cfg["modelName"]= "TransUNet"
         self.cfg["inputSize"] = 256
         self.cfg["patchSize"] = 16
@@ -59,7 +59,6 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
     def setParamMap(self, paramMap):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
-        # Example : self.windowSize = int(paramMap["windowSize"])
         self.cfg["inputSize"] = int(paramMap["inputSize"])
         self.cfg["patchSize"] = int(paramMap["patchSize"])
         self.cfg["maxIter"] = int(paramMap["maxIter"])
@@ -178,9 +177,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             print("ERROR, image size must be divisible by patch size")
             self.problem = True
 
-        if not(self.problem):
-
-
+        if not self.problem:
             model = ViT_seg(config_vit, img_size=config_vit.img_size, num_classes=config_vit.n_classes).cuda()
 
             if os.path.isfile(config_vit.pretrained_path) :

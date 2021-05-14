@@ -1,23 +1,16 @@
-from medpy import metric
-from scipy.ndimage import zoom
-import SimpleITK as sitk
 import logging
 import os
 import random
-import sys
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.nn.modules.loss import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torchvision import transforms
 from torch.utils.data import Dataset
 import cv2
-import json
 from math import ceil
-from pathlib import Path
 import datetime
 
 
