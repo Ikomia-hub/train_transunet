@@ -205,6 +205,10 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             tb_logdir = Path(self.getTensorboardLogDir()+"/"+param.cfg["modelName"]+"/"+str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
 
+            # freeze resnet layers
+            for param in model.transformer.embeddings.hybrid_model.parameters():
+                param.requires_grad = False
+
             # train model
             transunet_utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
             with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
