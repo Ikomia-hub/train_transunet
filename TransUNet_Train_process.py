@@ -106,7 +106,6 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         self.problem = False
         dir_path = os.path.dirname(__file__)
         pretrained_path= os.fspath(Path(dir_path+"/networks/"+"R50+ViT-B_16.npz"))
-        print(pretrained_path)
         if not(os.path.isfile(pretrained_path)):
             import requests
             print('Downloading weights')
@@ -142,13 +141,16 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         # Get parameters :
         param = self.getParam()
         expert_mode = param.cfg["expertMode"]
+        str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
 
         if os.path.isfile(expert_mode):
+
             with open(expert_mode, 'r') as file:
-                str = yaml.load(file, Loader=yaml.FullLoader)
+                str = yaml.load(file, Loader=yaml.Loader)
                 config_vit = ConfigDict(str)
                 pretrained_path = config_vit.pretrained_path
                 output_path = config_vit.output_path
+
         else:
             config_vit = CONFIGS_ViT_seg['R50-ViT-B_16']
             config_vit.pretrained_path = pretrained_path
@@ -163,7 +165,9 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             config_vit.n_skip = 3
             config_vit.patches.grid = (int(config_vit.img_size / config_vit.patch_size), int(config_vit.img_size / config_vit.patch_size))
             config_vit.class_names = [name for k, name in input.data["metadata"]["category_names"].items()]
-            str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
+            # empirical values for warmup
+            config_vit.warmup_iters = config_vit.max_iter // 3
+            config_vit.warmup_factor = 0.001
             if os.path.isdir(param.cfg["outputFolder"]):
                 output_path = os.path.join(param.cfg["outputFolder"], str_datetime)
             else:
