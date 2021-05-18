@@ -33,7 +33,7 @@ def rgb2mask(img, color2index):
 def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     batch_size = cfg.batch_size
     img_size = cfg.img_size
-    num_classes = cfg.num_classes
+    num_classes = cfg.n_classes
     base_lr = cfg.base_lr
     max_iterations = cfg.max_iter
     snapshot_path = cfg.output_path
@@ -42,11 +42,8 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     n_gpu = 1
     batch_size = batch_size * n_gpu
 
-    # empirical values for warmup
-    warmup_iters = max_iterations // 3
-    warmup_factor = 0.001
-    transformations = [Nphwc2tensorchw(), Resize(img_size, img_size)]
-    if cfg.pretrain is not None:
+    transformations = [NpToTensor(),RandomResizedCrop(size=img_size)]
+    if cfg.pretrained_path is not None:
         mean = np.array([123.675, 116.280, 103.530], dtype=np.float)
         std = np.array([58.395, 57.120, 57.375], dtype=np.float)
         norm = Normalize(mean=mean, std=std)
@@ -55,7 +52,6 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
         # preprocess input for resnet pretrained on imagenet
         transformations.append(norm)
 
-    # transformations.append(RandomGenerator(output_size=[img_size, img_size]))
 
     idx_split = int(len(ikDataset["images"]) * split_train_test)
 
@@ -107,7 +103,7 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            lr_ = get_lr(base_lr, iter_num, max_iterations, warmup_iters, warmup_factor)
+            lr_ = get_lr(base_lr, iter_num, max_iterations, cfg.warmup_iters, cfg.warmup_factor)
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr_
 
@@ -121,7 +117,7 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
 
             if iter_num % 20 == 0:
                 image = image_batch[0, 0, :, :, :]
-                if cfg.pretrain is not None:
+                if cfg.pretrained_path is not None:
                     image = unorm(image.float())
 
                 writer.add_image('train/Image', image / 255, iter_num, dataformats='CHW')
@@ -194,6 +190,20 @@ class NormalizeFromPaper(object):
         sample = {'image': image, 'label': label}
         return sample
 
+class RandomResizedCrop(object):
+    def __init__(self,size):
+        self.size = size
+        self.func=transforms.RandomResizedCrop(size=[self.size,self.size])
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        # it is important to do the same transformation for image and label
+        state = torch.get_rng_state()
+        image = self.func(image)
+        torch.set_rng_state(state)
+        label = self.func(label.unsqueeze(0)).squeeze()
+
+        sample = {'image': image, 'label': label}
+        return sample
 
 def get_lr(base_lr, iter, max_iter, warmup_iters=None, warmup_factor=None):
     if iter >= warmup_iters or warmup_iters is None:
@@ -235,7 +245,7 @@ class Resize(object):
         return sample
 
 
-class Nphwc2tensorchw(object):
+class NpToTensor(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         image = torch.from_numpy(image.astype(np.float32)).unsqueeze(0)
