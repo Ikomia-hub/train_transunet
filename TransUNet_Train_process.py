@@ -53,8 +53,9 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
         self.cfg["pretrain"] = True
         self.cfg["outputFolder"] = ""
         self.cfg["baseLearningRate"] = 0.01
-        self.cfg["pretrain"] = True
         self.cfg["expertMode"] = ""
+        self.cfg["earlyStopping"] = False
+        self.cfg["patience"] = -1
 
     def setParamMap(self, paramMap):
         # Set parameters values from Ikomia application
@@ -65,11 +66,13 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
         self.cfg["batchSize"] = int(paramMap["batchSize"])
         self.cfg["splitTrainTest"] = int(paramMap["splitTrainTest"])
         self.cfg["evalPeriod"] = int(paramMap["evalPeriod"])
-        self.cfg["pretrain"] = bool(paramMap["pretrain"])
         self.cfg["outputFolder"] = paramMap["outputFolder"]
         self.cfg["baseLearningRate"] = float(paramMap["baseLearningRate"])
         self.cfg["pretrain"] = bool(paramMap["pretrain"])
         self.cfg["expertMode"] = paramMap["expertMode"]
+        self.cfg["earlyStopping"] = bool(paramMap["earlyStopping"])
+        self.cfg["patience"] = int(paramMap["patience"])
+
 
 # --------------------
 # - Class which implements the process
@@ -106,6 +109,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         self.problem = False
         dir_path = os.path.dirname(__file__)
         pretrained_path= os.fspath(Path(dir_path+"/networks/"+"R50+ViT-B_16.npz"))
+        # download pretrained weights
         if not(os.path.isfile(pretrained_path)):
             import requests
             print('Downloading weights')
@@ -130,6 +134,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             print("ERROR, there is no input dataset")
             self.problem = True
         else:
+            # complete class names if input dataset has no background class
             if not(input.has_bckgnd_class):
                 tmp_dict = {0:"background"}
                 for k,name in input.data["metadata"]["category_names"].items():
@@ -141,10 +146,11 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         # Get parameters :
         param = self.getParam()
         expert_mode = param.cfg["expertMode"]
+        # current datetime is used as folder name
         str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
 
         if os.path.isfile(expert_mode):
-
+            # load config file
             with open(expert_mode, 'r') as file:
                 str = yaml.load(file, Loader=yaml.Loader)
                 config_vit = ConfigDict(str)
@@ -165,14 +171,15 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             config_vit.n_skip = 3
             config_vit.patches.grid = (int(config_vit.img_size / config_vit.patch_size), int(config_vit.img_size / config_vit.patch_size))
             config_vit.class_names = [name for k, name in input.data["metadata"]["category_names"].items()]
-            # empirical values for warmup
             config_vit.warmup_iters = config_vit.max_iter // 3
             config_vit.warmup_factor = 0.001
+            config_vit.patience = param.cfg["patience"]
             if os.path.isdir(param.cfg["outputFolder"]):
                 output_path = os.path.join(param.cfg["outputFolder"], str_datetime)
             else:
                 output_path = os.path.join(dir_path, "output", str_datetime)
 
+            # create output folder
             if not os.path.exists(output_path):
                 os.makedirs(output_path)
             config_vit.output_path = output_path
@@ -182,8 +189,10 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             self.problem = True
 
         if not self.problem:
+            # initialize model
             model = ViT_seg(config_vit, img_size=config_vit.img_size, num_classes=config_vit.n_classes).cuda()
 
+            # load weights from pretrained path
             if os.path.isfile(config_vit.pretrained_path) :
                 with np.load(pretrained_path) as data:
                     pretrained_names = data.files
@@ -195,6 +204,8 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
 
             tb_logdir = Path(self.getTensorboardLogDir()+"/"+param.cfg["modelName"]+"/"+str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
+
+            # train model
             transunet_utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
             with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
