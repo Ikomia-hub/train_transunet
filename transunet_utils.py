@@ -79,18 +79,20 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     dice_loss = DiceLoss(num_classes)
     hard_pixel_loss = DeepLabCE(top_k_percent_pixels=0.2)
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
-    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
     iter_num = 0
     print("{} iterations per epoch. {} max iterations ".format(len(trainloader), max_iterations))
-    best_performance = 0.0
+    best_performance = 0
+    wait = 0
+    delta = 0.001
+    stop_from_early_stopping = False
     max_epoch = ceil(max_iterations / batch_size / len(db_train))
     iterator = tqdm(range(max_epoch), ncols=70)
     for epoch_num in iterator:
-        if stop():
+        if stop() or stop_from_early_stopping:
             break
         for i_batch, sampled_batch in enumerate(trainloader):
-            if stop() or iter_num > max_iterations - 1:
+            if stop() or iter_num > max_iterations - 1 or stop_from_early_stopping:
                 break
             image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
@@ -156,6 +158,17 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
 
                 for class_iou, class_name in zip(iou, ikDataset["metadata"]["category_names"].values()):
                     writer.add_scalar('info/iou-' + class_name, class_iou, iter_num)
+
+                # early stopping
+                if cfg.patience >-1:
+                    if miou > best_performance - delta:
+                        best_performance = miou
+                        wait = 0
+                    else:
+                        wait += 1
+                        if wait> cfg.patience:
+                            stop_from_early_stopping=True
+                            print("Training stopped due to early stopping")
 
     save_mode_path = os.path.join(snapshot_path, 'iter_' + str(iter_num) + '.pth')
     torch.save(model.state_dict(), save_mode_path)

@@ -72,12 +72,30 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.evalPeriodSpinBox.setSingleStep(1)
         self.evalPeriodSpinBox.setValue(self.parameters.cfg["evalPeriod"])
 
+        earlyStoppingLabel = QLabel("Early stopping:")
+        self.earlyStoppingCheckBox = QCheckBox()
+        self.earlyStoppingCheckBox.setChecked(self.parameters.cfg["earlyStopping"])
+        self.earlyStoppingCheckBox.clicked.connect(self.showPatienceSpinBox)
+
         baseLearningRateLabel = QLabel("Base learning rate:")
         self.baseLearningRateSpinBox = QDoubleSpinBox()
         self.baseLearningRateSpinBox.setRange(0, 10)
         self.baseLearningRateSpinBox.setDecimals(4)
         self.baseLearningRateSpinBox.setSingleStep(0.0001)
         self.baseLearningRateSpinBox.setValue(self.parameters.cfg["baseLearningRate"])
+
+        self.patienceLabel = QLabel("Patience:")
+        self.patienceSpinBox = QSpinBox()
+        self.patienceSpinBox.setRange(0, 2147483647)
+        self.patienceSpinBox.setSingleStep(1)
+        self.patienceSpinBox.setValue(self.parameters.cfg["patience"])
+        if self.earlyStoppingCheckBox.isChecked():
+            self.patienceLabel.show()
+            self.patienceSpinBox.show()
+        else:
+            self.patienceLabel.hide()
+            self.patienceSpinBox.hide()
+
 
         # Set widget layout
 
@@ -93,6 +111,10 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.gridLayout.addWidget(self.evalPeriodSpinBox, 4, 1, 1, 2)
         self.gridLayout.addWidget(baseLearningRateLabel, 5, 0, 1, 1)
         self.gridLayout.addWidget(self.baseLearningRateSpinBox, 5, 1, 1, 2)
+        self.gridLayout.addWidget(earlyStoppingLabel,6,0,1,1)
+        self.gridLayout.addWidget(self.earlyStoppingCheckBox,6,1,1,2)
+        self.gridLayout.addWidget(self.patienceLabel,7,0,1,1)
+        self.gridLayout.addWidget(self.patienceSpinBox,7,1,1,2)
 
         # Output folder
         self.browse_out_folder = utils.append_browse_file(self.gridLayout, label="Output folder",
@@ -107,6 +129,14 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
 
         self.setLayout(layout_ptr)
 
+    def showPatienceSpinBox(self):
+        if self.earlyStoppingCheckBox.isChecked():
+            self.patienceLabel.show()
+            self.patienceSpinBox.show()
+        else:
+            self.patienceLabel.hide()
+            self.patienceSpinBox.hide()
+
     def onApply(self):
         # Apply button clicked slot
         # Get parameters from widget
@@ -119,6 +149,11 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.parameters.cfg["baseLearningRate"] = self.baseLearningRateSpinBox.value()
         self.parameters.cfg["outputFolder"] = self.browse_out_folder.path
         self.parameters.cfg["expertMode"] = self.browse_expert_mode.path
+        self.parameters.cfg["earlyStopping"] = self.earlyStoppingCheckBox.isChecked()
+        if self.earlyStoppingCheckBox.isChecked():
+            self.parameters.cfg["patience"] = self.patienceSpinBox.value()
+        else:
+            self.parameters.cfg["patience"] = -1
         # Send signal to launch the process
         self.emitApply(self.parameters)
 
