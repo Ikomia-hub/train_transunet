@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 import cv2
 from math import ceil
 import datetime
+from torch.nn.modules.loss import CrossEntropyLoss
 
 
 def rgb2mask(img, color2index):
@@ -41,8 +42,7 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     eval_period = cfg.eval_period
     n_gpu = 1
     batch_size = batch_size * n_gpu
-
-    transformations = [NpToTensor(),RandomResizedCrop(size=img_size)]
+    transformations = [NpToTensor(), RandomResizedCrop(size=img_size), RandomVerticalFlip(), RandomRotate()]
     if cfg.pretrained_path is not None:
         mean = np.array([123.675, 116.280, 103.530], dtype=np.float)
         std = np.array([58.395, 57.120, 57.375], dtype=np.float)
@@ -51,7 +51,6 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
         unorm = UnNormalize(mean=mean, std=std)
         # preprocess input for resnet pretrained on imagenet
         transformations.append(norm)
-
 
     idx_split = int(len(ikDataset["images"]) * split_train_test)
 
@@ -76,8 +75,8 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     if n_gpu > 1:
         model = nn.DataParallel(model)
     model.train()
-    # ce_loss = CrossEntropyLoss()
-    # dice_loss = DiceLoss(num_classes)
+    ce_loss = CrossEntropyLoss()
+    dice_loss = DiceLoss(num_classes)
     hard_pixel_loss = DeepLabCE(top_k_percent_pixels=0.2)
     optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -96,10 +95,10 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
             image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
             outputs = model(image_batch)
-            # loss_ce = ce_loss(outputs, label_batch[:].long())
-            # loss_dice = dice_loss(outputs, label_batch, softmax=True)
-            # loss = 0.5 * loss_ce + 0.5 * loss_dice
-            loss = hard_pixel_loss(outputs, label_batch[:].long())
+            loss_ce = ce_loss(outputs, label_batch[:].long())
+            loss_dice = dice_loss(outputs, label_batch, softmax=True)
+            loss = 0.5 * loss_ce + 0.5 * loss_dice
+            #loss = hard_pixel_loss(outputs, label_batch[:].long())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -190,10 +189,12 @@ class NormalizeFromPaper(object):
         sample = {'image': image, 'label': label}
         return sample
 
+
 class RandomResizedCrop(object):
-    def __init__(self,size):
+    def __init__(self, size):
         self.size = size
-        self.func=transforms.RandomResizedCrop(size=[self.size,self.size])
+        self.func = transforms.RandomResizedCrop(size=[self.size, self.size])
+
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         # it is important to do the same transformation for image and label
@@ -204,6 +205,44 @@ class RandomResizedCrop(object):
 
         sample = {'image': image, 'label': label}
         return sample
+
+
+class RandomVerticalFlip(object):
+    def __init__(self, p=0.5):
+        self.p = p
+        self.func = transforms.RandomVerticalFlip(p=self.p)
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        # it is important to do the same transformation for image and label
+        state = torch.get_rng_state()
+        image = self.func(image)
+        torch.set_rng_state(state)
+        label = self.func(label.unsqueeze(0)).squeeze()
+
+        sample = {'image': image, 'label': label}
+        return sample
+
+
+class RandomRotate(object):
+    def __init__(self, p=0.5, degrees=90):
+        self.p = p
+        self.degrees = degrees
+        self.func = transforms.RandomRotation(self.degrees)
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        # it is important to do the same transformation for image and label
+
+        if np.random.random() < self.p:
+            state = torch.get_rng_state()
+            image = self.func(image)
+            torch.set_rng_state(state)
+            label = self.func(label.unsqueeze(0)).squeeze()
+
+        sample = {'image': image, 'label': label}
+        return sample
+
 
 def get_lr(base_lr, iter, max_iter, warmup_iters=None, warmup_factor=None):
     if iter >= warmup_iters or warmup_iters is None:
