@@ -11,7 +11,6 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import cv2
 from math import ceil
-import datetime
 from torch.nn.modules.loss import CrossEntropyLoss
 
 
@@ -88,6 +87,9 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     stop_from_early_stopping = False
     max_epoch = ceil(max_iterations / batch_size / len(db_train))
     iterator = tqdm(range(max_epoch), ncols=70)
+    patience = cfg.patience if cfg.patience is not None else -1
+    save_mode_path = os.path.join(snapshot_path, 'best_model.pth')
+
     for epoch_num in iterator:
         if stop() or stop_from_early_stopping:
             break
@@ -160,19 +162,20 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
                     writer.add_scalar('info/iou-' + class_name, class_iou, iter_num)
 
                 # early stopping
-                if cfg.patience >-1:
-                    if miou > best_performance - delta:
-                        best_performance = miou
-                        wait = 0
-                    else:
+
+                if miou > best_performance - delta:
+                    best_performance = miou
+                    wait = 0
+                    torch.save(model.state_dict(), save_mode_path)
+                    logging.info("save model to {}".format(save_mode_path))
+
+                else:
+                    if patience > -1:
                         wait += 1
-                        if wait> cfg.patience:
+                        if wait> patience:
                             stop_from_early_stopping=True
                             print("Training stopped due to early stopping")
 
-    save_mode_path = os.path.join(snapshot_path, 'iter_' + str(iter_num) + '.pth')
-    torch.save(model.state_dict(), save_mode_path)
-    logging.info("save model to {}".format(save_mode_path))
     iterator.close()
 
     writer.close()
@@ -258,7 +261,11 @@ class RandomRotate(object):
 
 
 def get_lr(base_lr, iter, max_iter, warmup_iters=None, warmup_factor=None):
-    if iter >= warmup_iters or warmup_iters is None:
+    if warmup_iters is None:
+        factor = 1
+    elif warmup_factor is None:
+        factor = 1
+    elif iter >= warmup_iters :
         factor = 1
     else:
         alpha = iter / warmup_iters

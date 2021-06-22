@@ -171,8 +171,10 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             config_vit.n_skip = 3
             config_vit.patches.grid = (int(config_vit.img_size / config_vit.patch_size), int(config_vit.img_size / config_vit.patch_size))
             config_vit.class_names = [name for k, name in input.data["metadata"]["category_names"].items()]
-            config_vit.warmup_iters = config_vit.max_iter // 3
-            config_vit.warmup_factor = 0.001
+            #config_vit.warmup_iters = config_vit.max_iter // 3
+            config_vit.warmup_iters = None
+            config_vit.warmup_factor = None
+            #config_vit.warmup_factor = 0.001
             config_vit.patience = param.cfg["patience"]
             if os.path.isdir(param.cfg["outputFolder"]):
                 output_path = os.path.join(param.cfg["outputFolder"], str_datetime)
