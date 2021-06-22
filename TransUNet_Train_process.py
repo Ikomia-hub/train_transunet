@@ -237,24 +237,37 @@ class TransUNet_TrainProcessFactory(dataprocess.CProcessFactory):
         dataprocess.CProcessFactory.__init__(self)
         # Set process information as string here
         self.info.name = "TransUNet_Train"
-        self.info.shortDescription = "your short description"
-        self.info.description = "your description"
-        self.info.authors = "Plugin authors"
+        self.info.shortDescription = "Training process for TransUNet model. "
+        self.info.description = "Training process for TransUNet model. " \
+                                "This Ikomia plugin can train TransUNet model for semantic segmantation. " \
+                                "Most common parameters are exposed in the settings window. For expert usage, " \
+                                "it is also possible to select a custom configuration file." \
+                                "To start your training:" \
+                                "create a new workflow, " \
+                                "add a task node loading your dataset in Ikomia format " \
+                                "(consult the marketplace to check if a suitable dataset loader already exists), " \
+                                "add this TransUNet train task, " \
+                                "adjust parameters, " \
+                                "and click apply to start the training. " \
+                                "You are able to monitor your training runs through the TensorBoard dashboard. " \
+                                "Compared to original paper, image preprocessing has been changed to match " \
+                                "ResNet trained on ImageNet image preprocessing."
         # relative path -> as displayed in Ikomia application process tree
-        self.info.path = "Plugins/Python"
+        self.info.path = "Plugins/Python/Train"
         self.info.version = "1.0.0"
         # self.info.iconPath = "your path to a specific icon"
-        self.info.authors = "algorithm author"
-        self.info.article = "title of associated research article"
-        self.info.journal = "publication journal"
+        self.info.iconPath = "icons/transunet.png"
+        self.info.authors = "Jieneng Chen, Yongyi Lu, Qihang Yu, Xiangde Luo,Ehsan Adeli, Yan Wang, Le Lu, Alan L. Yuille, and Yuyin Zhou"
+        self.info.article = "TransUNet: Transformers Make StrongEncoders for Medical Image Segmentation"
+        self.info.journal = "not published yet"
         self.info.year = 2021
-        self.info.license = "MIT License"
+        self.info.license = "Apache-2.0 License"
         # URL of documentation
-        self.info.documentationLink = ""
+        self.info.documentationLink = "https://arxiv.org/abs/2102.04306"
         # Code source repository
-        self.info.repository = ""
+        self.info.repository = "https://github.com/Beckschen/TransUNet"
         # Keywords used for search
-        self.info.keywords = "your,keywords,here"
+        self.info.keywords = "semantic, segmentation, encoder, decoder, Transformers, U-Net "
 
     def create(self, param=None):
         # Create process object
