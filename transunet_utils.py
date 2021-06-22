@@ -85,7 +85,7 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
     wait = 0
     delta = 0.001
     stop_from_early_stopping = False
-    max_epoch = ceil(max_iterations / batch_size / len(db_train))
+    max_epoch = ceil(max_iterations * batch_size / len(db_train))
     iterator = tqdm(range(max_epoch), ncols=70)
     patience = cfg.patience if cfg.patience is not None else -1
     save_mode_path = os.path.join(snapshot_path, 'best_model.pth')
