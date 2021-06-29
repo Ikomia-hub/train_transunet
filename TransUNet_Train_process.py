@@ -168,6 +168,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             config_vit.base_lr = param.cfg["baseLearningRate"]
             config_vit.patch_size = 16
             config_vit.n_classes = num_classes
+            config_vit.freeze_backbone = True
             config_vit.n_skip = 3
             config_vit.patches.grid = (int(config_vit.img_size / config_vit.patch_size), int(config_vit.img_size / config_vit.patch_size))
             config_vit.class_names = [name for k, name in input.data["metadata"]["category_names"].items()]
@@ -208,8 +209,9 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
             tb_writer = SummaryWriter(tb_logdir)
 
             # freeze resnet layers
-            for param in model.transformer.embeddings.hybrid_model.parameters():
-                param.requires_grad = False
+            if config_vit.freeze_backbone:
+                for param in model.transformer.embeddings.hybrid_model.parameters():
+                    param.requires_grad = False
 
             # train model
             transunet_utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
