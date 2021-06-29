@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 import cv2
 from math import ceil
 from torch.nn.modules.loss import CrossEntropyLoss
+from torchvision.transforms.functional import InterpolationMode
 
 
 def rgb2mask(img, color2index):
@@ -167,7 +168,7 @@ def my_trainer(model, cfg, ikDataset, stop, step_fct, writer, seed=10):
                     best_performance = miou
                     wait = 0
                     torch.save(model.state_dict(), save_mode_path)
-                    logging.info("save model to {}".format(save_mode_path))
+                    print("save model to {}".format(save_mode_path))
 
                 else:
                     if patience > -1:
@@ -209,15 +210,16 @@ class NormalizeFromPaper(object):
 class RandomResizedCrop(object):
     def __init__(self, size):
         self.size = size
-        self.func = transforms.RandomResizedCrop(size=[self.size, self.size])
+        self.f_img = transforms.RandomResizedCrop(size=[self.size, self.size],interpolation=InterpolationMode.BICUBIC)
+        self.f_label = transforms.RandomResizedCrop(size=[self.size, self.size],interpolation=InterpolationMode.NEAREST)
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         # it is important to do the same transformation for image and label
         state = torch.get_rng_state()
-        image = self.func(image)
+        image = self.f_img(image)
         torch.set_rng_state(state)
-        label = self.func(label.unsqueeze(0)).squeeze()
+        label = self.f_label(label.unsqueeze(0)).squeeze()
 
         sample = {'image': image, 'label': label}
         return sample
@@ -289,20 +291,6 @@ class UnNormalize(object):
             t.mul_(s).add_(m)
             # The normalize code -> t.sub(m).div(s)
         return tensor
-
-
-class Resize(object):
-    def __init__(self, height, width):
-        self.h = height
-        self.w = width
-
-    def __call__(self, sample):
-        image, label = sample['image'], sample['label']
-        image = transforms.functional.resize(image, size=(self.h, self.w))
-        label = transforms.functional.resize(label.unsqueeze(0), size=(self.h, self.w)).squeeze(0)
-        sample = {'image': image, 'label': label}
-        return sample
-
 
 class NpToTensor(object):
     def __call__(self, sample):
