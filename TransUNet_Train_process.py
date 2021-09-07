@@ -16,17 +16,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ikomia import dataprocess
 import copy
-# Your imports below
+import os
+from ikomia import dataprocess
+from ikomia.core.task import TaskParam
 from ikomia.dnn import datasetio
 from ikomia.dnn import dnntrain
-import os
-import transunet_utils
+from distutils.util import strtobool
+from TransUNet_Train.transunet_utils import my_trainer
 from pathlib import Path
 import numpy as np
-from networks.vit_seg_modeling import VisionTransformer as ViT_seg
-from networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+from TransUNet_Train.networks.vit_seg_modeling import VisionTransformer as ViT_seg
+from TransUNet_Train.networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -38,10 +39,10 @@ import yaml
 # - Class to handle the process parameters
 # - Inherits PyCore.CProtocolTaskParam from Ikomia API
 # --------------------
-class TransUNet_TrainParam(dnntrain.TrainParam):
+class TransUNet_TrainParam(TaskParam):
 
     def __init__(self):
-        dnntrain.TrainParam.__init__(self)
+        TaskParam.__init__(self)
         # Place default value initialization here
         self.cfg["modelName"]= "TransUNet"
         self.cfg["inputSize"] = 256
@@ -57,21 +58,21 @@ class TransUNet_TrainParam(dnntrain.TrainParam):
         self.cfg["earlyStopping"] = False
         self.cfg["patience"] = -1
 
-    def setParamMap(self, paramMap):
+    def setParamMap(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
-        self.cfg["inputSize"] = int(paramMap["inputSize"])
-        self.cfg["patchSize"] = int(paramMap["patchSize"])
-        self.cfg["maxIter"] = int(paramMap["maxIter"])
-        self.cfg["batchSize"] = int(paramMap["batchSize"])
-        self.cfg["splitTrainTest"] = int(paramMap["splitTrainTest"])
-        self.cfg["evalPeriod"] = int(paramMap["evalPeriod"])
-        self.cfg["outputFolder"] = paramMap["outputFolder"]
-        self.cfg["baseLearningRate"] = float(paramMap["baseLearningRate"])
-        self.cfg["pretrain"] = bool(paramMap["pretrain"])
-        self.cfg["expertMode"] = paramMap["expertMode"]
-        self.cfg["earlyStopping"] = bool(paramMap["earlyStopping"])
-        self.cfg["patience"] = int(paramMap["patience"])
+        self.cfg["inputSize"] = int(param_map["inputSize"])
+        self.cfg["patchSize"] = int(param_map["patchSize"])
+        self.cfg["maxIter"] = int(param_map["maxIter"])
+        self.cfg["batchSize"] = int(param_map["batchSize"])
+        self.cfg["splitTrainTest"] = int(param_map["splitTrainTest"])
+        self.cfg["evalPeriod"] = int(param_map["evalPeriod"])
+        self.cfg["outputFolder"] = param_map["outputFolder"]
+        self.cfg["baseLearningRate"] = float(param_map["baseLearningRate"])
+        self.cfg["pretrain"] = strtobool(param_map["pretrain"])
+        self.cfg["expertMode"] = param_map["expertMode"]
+        self.cfg["earlyStopping"] = strtobool(param_map["earlyStopping"])
+        self.cfg["patience"] = int(param_map["patience"])
 
 
 # --------------------
@@ -84,7 +85,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         dnntrain.TrainProcess.__init__(self, name,param)
         # Add input/output of the process here
         self.addInput(datasetio.IkDatasetIO())
-        self.stop_train=False
+        self.stop_train = False
         # Create parameters class
         if param is None:
             self.setParam(TransUNet_TrainParam())
@@ -214,7 +215,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
                     param.requires_grad = False
 
             # train model
-            transunet_utils.my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
+            my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
             with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
 
@@ -233,10 +234,10 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
 # - Factory class to build process object
 # - Inherits PyDataProcess.CProcessFactory from Ikomia API
 # --------------------
-class TransUNet_TrainProcessFactory(dataprocess.CProcessFactory):
+class TransUNet_TrainProcessFactory(dataprocess.CTaskFactory):
 
     def __init__(self):
-        dataprocess.CProcessFactory.__init__(self)
+        dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "TransUNet_Train"
         self.info.shortDescription = "Training process for TransUNet model. "

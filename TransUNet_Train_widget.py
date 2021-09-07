@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ikomia import utils, core, dataprocess
-import TransUNet_Train_process as processMod
-
-#PyQt GUI framework
+from ikomia.utils import qtconversion, pyqtutils
+from TransUNet_Train.TransUNet_Train_process import TransUNet_TrainParam
+# PyQt GUI framework
 from PyQt5.QtWidgets import *
 
 
@@ -27,20 +27,20 @@ from PyQt5.QtWidgets import *
 # - Class which implements widget associated with the process
 # - Inherits PyCore.CProtocolTaskWidget from Ikomia API
 # --------------------
-class TransUNet_TrainWidget(core.CProtocolTaskWidget):
+class TransUNet_TrainWidget(core.CWorkflowTaskWidget):
 
     def __init__(self, param, parent):
-        core.CProtocolTaskWidget.__init__(self, parent)
+        core.CWorkflowTaskWidget.__init__(self, parent)
 
         if param is None:
-            self.parameters = processMod.TransUNet_TrainParam()
+            self.parameters = TransUNet_TrainParam()
         else:
             self.parameters = param
 
         # Create layout : QGridLayout by default
         self.gridLayout = QGridLayout()
         # PyQt -> Qt wrapping
-        layout_ptr = utils.PyQtToQt(self.gridLayout)
+        layout_ptr = qtconversion.PyQtToQt(self.gridLayout)
 
         inputSizeLabel = QLabel("Desired input size:")
         self.inputSizeSpinBox = QSpinBox()
@@ -96,9 +96,7 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
             self.patienceLabel.hide()
             self.patienceSpinBox.hide()
 
-
         # Set widget layout
-
         self.gridLayout.addWidget(inputSizeLabel, 0, 0, 1, 1)
         self.gridLayout.addWidget(self.inputSizeSpinBox, 0, 1, 1, 2)
         self.gridLayout.addWidget(maxIterLabel, 1, 0, 1, 1)
@@ -117,15 +115,15 @@ class TransUNet_TrainWidget(core.CProtocolTaskWidget):
         self.gridLayout.addWidget(self.patienceSpinBox,7,1,1,2)
 
         # Output folder
-        self.browse_out_folder = utils.append_browse_file(self.gridLayout, label="Output folder",
-                                                          path=self.parameters.cfg["outputFolder"],
-                                                          tooltip="Select folder",
-                                                          mode=QFileDialog.Directory)
+        self.browse_out_folder = pyqtutils.append_browse_file(self.gridLayout, label="Output folder",
+                                                              path=self.parameters.cfg["outputFolder"],
+                                                              tooltip="Select folder",
+                                                              mode=QFileDialog.Directory)
 
-        self.browse_expert_mode = utils.append_browse_file(self.gridLayout, label="Advanced yaml config",
-                                                           path=self.parameters.cfg["expertMode"],
-                                                           tooltip="Select yaml file",
-                                                           mode=QFileDialog.ExistingFile)
+        self.browse_expert_mode = pyqtutils.append_browse_file(self.gridLayout, label="Advanced yaml config",
+                                                               path=self.parameters.cfg["expertMode"],
+                                                               tooltip="Select yaml file",
+                                                               mode=QFileDialog.ExistingFile)
 
         self.setLayout(layout_ptr)
 

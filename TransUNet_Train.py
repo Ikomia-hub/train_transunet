@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ikomia import dataprocess
-import TransUNet_Train_process as processMod
-import TransUNet_Train_widget as widgetMod
+
 
 # --------------------
 # - Interface class to integrate the process with Ikomia application
@@ -30,9 +29,11 @@ class TransUNet_Train(dataprocess.CPluginProcessInterface):
         dataprocess.CPluginProcessInterface.__init__(self)
 
     def getProcessFactory(self):
+        from TransUNet_Train.TransUNet_Train_process import TransUNet_TrainProcessFactory
         # Instantiate process object
-        return processMod.TransUNet_TrainProcessFactory()
+        return TransUNet_TrainProcessFactory()
 
     def getWidgetFactory(self):
+        from TransUNet_Train.TransUNet_Train_widget import TransUNet_TrainWidgetFactory
         # Instantiate associated widget object
-        return widgetMod.TransUNet_TrainWidgetFactory()
+        return TransUNet_TrainWidgetFactory()
