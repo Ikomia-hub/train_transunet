@@ -18,7 +18,7 @@
 
 from ikomia import utils, core, dataprocess
 from ikomia.utils import qtconversion, pyqtutils
-from TransUNet_Train.TransUNet_Train_process import TransUNet_TrainParam
+from train_transunet.train_transunet_process import TrainTransunetParam
 # PyQt GUI framework
 from PyQt5.QtWidgets import *
 
@@ -27,13 +27,13 @@ from PyQt5.QtWidgets import *
 # - Class which implements widget associated with the process
 # - Inherits PyCore.CProtocolTaskWidget from Ikomia API
 # --------------------
-class TransUNet_TrainWidget(core.CWorkflowTaskWidget):
+class TrainTransunetWidget(core.CWorkflowTaskWidget):
 
     def __init__(self, param, parent):
         core.CWorkflowTaskWidget.__init__(self, parent)
 
         if param is None:
-            self.parameters = TransUNet_TrainParam()
+            self.parameters = TrainTransunetParam()
         else:
             self.parameters = param
 
@@ -160,13 +160,13 @@ class TransUNet_TrainWidget(core.CWorkflowTaskWidget):
 # - Factory class to build process widget object
 # - Inherits PyDataProcess.CWidgetFactory from Ikomia API
 # --------------------
-class TransUNet_TrainWidgetFactory(dataprocess.CWidgetFactory):
+class TrainTransunetWidgetFactory(dataprocess.CWidgetFactory):
 
     def __init__(self):
         dataprocess.CWidgetFactory.__init__(self)
         # Set the name of the process -> it must be the same as the one declared in the process factory class
-        self.name = "TransUNet_Train"
+        self.name = "train_transunet"
 
     def create(self, param):
         # Create widget object
-        return TransUNet_TrainWidget(param, None)
+        return TrainTransunetWidget(param, None)

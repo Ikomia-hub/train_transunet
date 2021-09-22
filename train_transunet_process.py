@@ -23,11 +23,11 @@ from ikomia.core.task import TaskParam
 from ikomia.dnn import datasetio
 from ikomia.dnn import dnntrain
 from distutils.util import strtobool
-from TransUNet_Train.transunet_utils import my_trainer
+from train_transunet.transunet_utils import my_trainer
 from pathlib import Path
 import numpy as np
-from TransUNet_Train.networks.vit_seg_modeling import VisionTransformer as ViT_seg
-from TransUNet_Train.networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
+from train_transunet.networks.vit_seg_modeling import VisionTransformer as ViT_seg
+from train_transunet.networks.vit_seg_modeling import CONFIGS as CONFIGS_ViT_seg
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -39,7 +39,7 @@ import yaml
 # - Class to handle the process parameters
 # - Inherits PyCore.CProtocolTaskParam from Ikomia API
 # --------------------
-class TransUNet_TrainParam(TaskParam):
+class TrainTransunetParam(TaskParam):
 
     def __init__(self):
         TaskParam.__init__(self)
@@ -79,7 +79,7 @@ class TransUNet_TrainParam(TaskParam):
 # - Class which implements the process
 # - Inherits PyCore.CProtocolTask or derived from Ikomia API
 # --------------------
-class TransUNet_TrainProcess(dnntrain.TrainProcess):
+class TrainTransunet(dnntrain.TrainProcess):
 
     def __init__(self, name, param):
         dnntrain.TrainProcess.__init__(self, name,param)
@@ -88,7 +88,7 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
         self.stop_train = False
         # Create parameters class
         if param is None:
-            self.setParam(TransUNet_TrainParam())
+            self.setParam(TrainTransunetParam())
         else:
             self.setParam(copy.deepcopy(param))
 
@@ -234,12 +234,12 @@ class TransUNet_TrainProcess(dnntrain.TrainProcess):
 # - Factory class to build process object
 # - Inherits PyDataProcess.CProcessFactory from Ikomia API
 # --------------------
-class TransUNet_TrainProcessFactory(dataprocess.CTaskFactory):
+class TrainTransunetFactory(dataprocess.CTaskFactory):
 
     def __init__(self):
         dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
-        self.info.name = "TransUNet_Train"
+        self.info.name = "train_transunet"
         self.info.shortDescription = "Training process for TransUNet model. "
         self.info.description = "Training process for TransUNet model. " \
                                 "This Ikomia plugin can train TransUNet model for semantic segmantation. " \
@@ -274,4 +274,4 @@ class TransUNet_TrainProcessFactory(dataprocess.CTaskFactory):
 
     def create(self, param=None):
         # Create process object
-        return TransUNet_TrainProcess(self.info.name, param)
+        return TrainTransunet(self.info.name, param)

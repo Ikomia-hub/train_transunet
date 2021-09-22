@@ -23,17 +23,17 @@ from ikomia import dataprocess
 # - Interface class to integrate the process with Ikomia application
 # - Inherits PyDataProcess.CPluginProcessInterface from Ikomia API
 # --------------------
-class TransUNet_Train(dataprocess.CPluginProcessInterface):
+class IkomiaPlugin(dataprocess.CPluginProcessInterface):
 
     def __init__(self):
         dataprocess.CPluginProcessInterface.__init__(self)
 
     def getProcessFactory(self):
-        from TransUNet_Train.TransUNet_Train_process import TransUNet_TrainProcessFactory
+        from train_transunet.train_transunet_process import TrainTransunetFactory
         # Instantiate process object
-        return TransUNet_TrainProcessFactory()
+        return TrainTransunetFactory()
 
     def getWidgetFactory(self):
-        from TransUNet_Train.TransUNet_Train_widget import TransUNet_TrainWidgetFactory
+        from train_transunet.train_transunet_widget import TrainTransunetWidgetFactory
         # Instantiate associated widget object
-        return TransUNet_TrainWidgetFactory()
+        return TrainTransunetWidgetFactory()
