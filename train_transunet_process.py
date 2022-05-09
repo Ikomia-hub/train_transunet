@@ -18,9 +18,8 @@
 
 import copy
 import os
-from ikomia import dataprocess
+from ikomia import dataprocess,core
 from ikomia.core.task import TaskParam
-from ikomia.dnn import datasetio
 from ikomia.dnn import dnntrain
 from distutils.util import strtobool
 from train_transunet.transunet_utils import my_trainer
@@ -204,7 +203,9 @@ class TrainTransunet(dnntrain.TrainProcess):
 
                 model.load_from(weights=pretrained_dict)
 
-            tb_logdir = Path(self.getTensorboardLogDir()+"/"+param.cfg["modelName"]+"/"+str_datetime)
+            tb_logdir = os.path.join(core.config.main_cfg["tensorboard"]["log_uri"],
+                                     param.cfg["modelName"],
+                                     str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
 
             # freeze resnet layers
@@ -213,8 +214,8 @@ class TrainTransunet(dnntrain.TrainProcess):
                     param.requires_grad = False
 
             # train model
-            my_trainer(model, config_vit, input.data,self.get_stop,self.emitStepProgress,tb_writer)
-            with open(os.path.join(output_path,"config.yaml"), 'w') as fp:
+            my_trainer(model, config_vit, input.data, self.get_stop, self.emitStepProgress, tb_writer)
+            with open(os.path.join(output_path, "config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
 
         # Call endTaskRun to finalize process
