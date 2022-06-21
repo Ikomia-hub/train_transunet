@@ -255,7 +255,7 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
                                 "Compared to original paper, image preprocessing has been changed to match " \
                                 "ResNet trained on ImageNet image preprocessing."
         # relative path -> as displayed in Ikomia application process tree
-        self.info.path = "Plugins/Python/Train"
+        self.info.path = "Plugins/Python/Segmentation"
         self.info.version = "1.0.0"
         # self.info.iconPath = "your path to a specific icon"
         self.info.iconPath = "icons/transunet.png"
