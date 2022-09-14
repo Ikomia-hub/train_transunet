@@ -18,10 +18,9 @@
 
 import copy
 import os
-from ikomia import dataprocess,core
+from ikomia import utils, dataprocess, core
 from ikomia.core.task import TaskParam
 from ikomia.dnn import dnntrain
-from distutils.util import strtobool
 from train_transunet.transunet_utils import my_trainer
 from pathlib import Path
 import numpy as np
@@ -68,9 +67,9 @@ class TrainTransunetParam(TaskParam):
         self.cfg["evalPeriod"] = int(param_map["evalPeriod"])
         self.cfg["outputFolder"] = param_map["outputFolder"]
         self.cfg["baseLearningRate"] = float(param_map["baseLearningRate"])
-        self.cfg["pretrain"] = strtobool(param_map["pretrain"])
+        self.cfg["pretrain"] = utils.strtobool(param_map["pretrain"])
         self.cfg["expertMode"] = param_map["expertMode"]
-        self.cfg["earlyStopping"] = strtobool(param_map["earlyStopping"])
+        self.cfg["earlyStopping"] = utils.strtobool(param_map["earlyStopping"])
         self.cfg["patience"] = int(param_map["patience"])
 
 
