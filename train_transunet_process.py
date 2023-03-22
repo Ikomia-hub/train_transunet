@@ -56,7 +56,7 @@ class TrainTransunetParam(TaskParam):
         self.cfg["earlyStopping"] = False
         self.cfg["patience"] = -1
 
-    def setParamMap(self, param_map):
+    def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
         self.cfg["inputSize"] = int(param_map["inputSize"])
@@ -84,14 +84,14 @@ class TrainTransunet(dnntrain.TrainProcess):
         self.stop_train = False
         # Create parameters class
         if param is None:
-            self.setParam(TrainTransunetParam())
+            self.set_param_object(TrainTransunetParam())
         else:
-            self.setParam(copy.deepcopy(param))
+            self.set_param_object(copy.deepcopy(param))
 
-    def getProgressSteps(self):
+    def get_progress_steps(self):
         # Function returning the number of progress steps for this process
         # This is handled by the main progress bar of Ikomia application
-        param = self.getParam()
+        param = self.get_param_object()
         if param is not None:
             return param.cfg["maxIter"]
         else:
@@ -99,8 +99,8 @@ class TrainTransunet(dnntrain.TrainProcess):
 
     def run(self):
         # Core function of your process
-        # Call beginTaskRun for initialization
-        self.beginTaskRun()
+        # Call begin_task_run for initialization
+        self.begin_task_run()
 
         self.stop_train = False
         self.problem = False
@@ -126,7 +126,7 @@ class TrainTransunet(dnntrain.TrainProcess):
                 self.problem = True
             print('Weights downloaded')
 
-        input = self.getInput(0)
+        input = self.get_input(0)
         if len(input.data) == 0:
             print("ERROR, there is no input dataset")
             self.problem = True
@@ -141,7 +141,7 @@ class TrainTransunet(dnntrain.TrainProcess):
             num_classes = len(input.data["metadata"]["category_names"])
 
         # Get parameters :
-        param = self.getParam()
+        param = self.get_param_object()
         expert_mode = param.cfg["expertMode"]
         # current datetime is used as folder name
         str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
@@ -213,12 +213,12 @@ class TrainTransunet(dnntrain.TrainProcess):
                     param.requires_grad = False
 
             # train model
-            my_trainer(model, config_vit, input.data, self.get_stop, self.emitStepProgress, tb_writer)
+            my_trainer(model, config_vit, input.data, self.get_stop, self.emit_step_progress, tb_writer)
             with open(os.path.join(output_path, "config.yaml"), 'w') as fp:
                 fp.write(config_vit.to_yaml())
 
-        # Call endTaskRun to finalize process
-        self.endTaskRun()
+        # Call end_task_run to finalize process
+        self.end_task_run()
 
     def get_stop(self):
         return self.stop_train
@@ -238,7 +238,7 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         dataprocess.CTaskFactory.__init__(self)
         # Set process information as string here
         self.info.name = "train_transunet"
-        self.info.shortDescription = "Training process for TransUNet model. "
+        self.info.short_description = "Training process for TransUNet model. "
         self.info.description = "Training process for TransUNet model. " \
                                 "This Ikomia plugin can train TransUNet model for semantic segmantation. " \
                                 "Most common parameters are exposed in the settings window. For expert usage, " \
@@ -256,15 +256,15 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Segmentation"
         self.info.version = "1.0.0"
-        # self.info.iconPath = "your path to a specific icon"
-        self.info.iconPath = "icons/transunet.png"
+        # self.info.icon_path = "your path to a specific icon"
+        self.info.icon_path = "icons/transunet.png"
         self.info.authors = "Jieneng Chen, Yongyi Lu, Qihang Yu, Xiangde Luo,Ehsan Adeli, Yan Wang, Le Lu, Alan L. Yuille, and Yuyin Zhou"
         self.info.article = "TransUNet: Transformers Make StrongEncoders for Medical Image Segmentation"
         self.info.journal = "not published yet"
         self.info.year = 2021
         self.info.license = "Apache-2.0 License"
         # URL of documentation
-        self.info.documentationLink = "https://arxiv.org/abs/2102.04306"
+        self.info.documentation_link = "https://arxiv.org/abs/2102.04306"
         # Code source repository
         self.info.repository = "https://github.com/Beckschen/TransUNet"
         # Keywords used for search

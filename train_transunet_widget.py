@@ -125,7 +125,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
                                                                tooltip="Select yaml file",
                                                                mode=QFileDialog.ExistingFile)
 
-        self.setLayout(layout_ptr)
+        self.set_layout(layout_ptr)
 
     def showPatienceSpinBox(self):
         if self.earlyStoppingCheckBox.isChecked():
@@ -135,7 +135,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
             self.patienceLabel.hide()
             self.patienceSpinBox.hide()
 
-    def onApply(self):
+    def on_apply(self):
         # Apply button clicked slot
         # Get parameters from widget
         self.parameters.cfg["inputSize"] = self.inputSizeSpinBox.value()
@@ -153,7 +153,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         else:
             self.parameters.cfg["patience"] = -1
         # Send signal to launch the process
-        self.emitApply(self.parameters)
+        self.emit_apply(self.parameters)
 
 
 # --------------------

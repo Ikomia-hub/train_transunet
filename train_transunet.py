@@ -28,12 +28,12 @@ class IkomiaPlugin(dataprocess.CPluginProcessInterface):
     def __init__(self):
         dataprocess.CPluginProcessInterface.__init__(self)
 
-    def getProcessFactory(self):
+    def get_process_factory(self):
         from train_transunet.train_transunet_process import TrainTransunetFactory
         # Instantiate process object
         return TrainTransunetFactory()
 
-    def getWidgetFactory(self):
+    def get_widget_factory(self):
         from train_transunet.train_transunet_widget import TrainTransunetWidgetFactory
         # Instantiate associated widget object
         return TrainTransunetWidgetFactory()
