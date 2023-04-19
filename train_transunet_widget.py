@@ -46,25 +46,25 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.inputSizeSpinBox = QSpinBox()
         self.inputSizeSpinBox.setRange(16, 4096)
         self.inputSizeSpinBox.setSingleStep(1)
-        self.inputSizeSpinBox.setValue(self.parameters.cfg["inputSize"])
+        self.inputSizeSpinBox.setValue(self.parameters.cfg["input_size"])
 
         maxIterLabel = QLabel("Max iter:")
         self.maxIterSpinBox = QSpinBox()
         self.maxIterSpinBox.setRange(0, 2147483647)
         self.maxIterSpinBox.setSingleStep(1)
-        self.maxIterSpinBox.setValue(self.parameters.cfg["maxIter"])
+        self.maxIterSpinBox.setValue(self.parameters.cfg["max_iter"])
 
         batchSizeLabel = QLabel("Batch size:")
         self.batchSizeSpinBox = QSpinBox()
         self.batchSizeSpinBox.setRange(1, 2147483647)
         self.batchSizeSpinBox.setSingleStep(1)
-        self.batchSizeSpinBox.setValue(self.parameters.cfg["batchSize"])
+        self.batchSizeSpinBox.setValue(self.parameters.cfg["batch_size"])
 
         splitTrainTestLabel = QLabel("Train test percentage:")
         self.splitTrainTestSpinBox = QSpinBox()
         self.splitTrainTestSpinBox.setRange(0, 100)
         self.splitTrainTestSpinBox.setSingleStep(1)
-        self.splitTrainTestSpinBox.setValue(self.parameters.cfg["splitTrainTest"])
+        self.splitTrainTestSpinBox.setValue(self.parameters.cfg["dataset_split_ratio"])
 
         evalPeriodLabel = QLabel("Evaluation period:")
         self.evalPeriodSpinBox = QSpinBox()
@@ -82,7 +82,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.baseLearningRateSpinBox.setRange(0, 10)
         self.baseLearningRateSpinBox.setDecimals(4)
         self.baseLearningRateSpinBox.setSingleStep(0.0001)
-        self.baseLearningRateSpinBox.setValue(self.parameters.cfg["baseLearningRate"])
+        self.baseLearningRateSpinBox.setValue(self.parameters.cfg["learning_rate"])
 
         self.patienceLabel = QLabel("Patience:")
         self.patienceSpinBox = QSpinBox()
@@ -116,12 +116,12 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
 
         # Output folder
         self.browse_out_folder = pyqtutils.append_browse_file(self.gridLayout, label="Output folder",
-                                                              path=self.parameters.cfg["outputFolder"],
+                                                              path=self.parameters.cfg["output_folder"],
                                                               tooltip="Select folder",
                                                               mode=QFileDialog.Directory)
 
         self.browse_expert_mode = pyqtutils.append_browse_file(self.gridLayout, label="Advanced yaml config",
-                                                               path=self.parameters.cfg["expertMode"],
+                                                               path=self.parameters.cfg["config"],
                                                                tooltip="Select yaml file",
                                                                mode=QFileDialog.ExistingFile)
 
@@ -138,15 +138,14 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
     def on_apply(self):
         # Apply button clicked slot
         # Get parameters from widget
-        self.parameters.cfg["inputSize"] = self.inputSizeSpinBox.value()
+        self.parameters.cfg["input_size"] = self.inputSizeSpinBox.value()
         self.parameters.cfg["batch_size"] = self.batchSizeSpinBox.value()
-        self.parameters.cfg["maxIter"] = self.maxIterSpinBox.value()
+        self.parameters.cfg["max_iter"] = self.maxIterSpinBox.value()
         self.parameters.cfg["evalPeriod"] = self.evalPeriodSpinBox.value()
-        self.parameters.cfg["splitTrainTest"] = self.splitTrainTestSpinBox.value()
-        self.parameters.cfg["outputFolder"] = self.browse_out_folder.path
-        self.parameters.cfg["baseLearningRate"] = self.baseLearningRateSpinBox.value()
-        self.parameters.cfg["outputFolder"] = self.browse_out_folder.path
-        self.parameters.cfg["expertMode"] = self.browse_expert_mode.path
+        self.parameters.cfg["dataset_split_ratio"] = self.splitTrainTestSpinBox.value()
+        self.parameters.cfg["output_folder"] = self.browse_out_folder.path
+        self.parameters.cfg["learning_rate"] = self.baseLearningRateSpinBox.value()
+        self.parameters.cfg["config"] = self.browse_expert_mode.path
         self.parameters.cfg["earlyStopping"] = self.earlyStoppingCheckBox.isChecked()
         if self.earlyStoppingCheckBox.isChecked():
             self.parameters.cfg["patience"] = self.patienceSpinBox.value()

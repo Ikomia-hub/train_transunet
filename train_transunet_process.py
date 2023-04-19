@@ -42,33 +42,33 @@ class TrainTransunetParam(TaskParam):
     def __init__(self):
         TaskParam.__init__(self)
         # Place default value initialization here
-        self.cfg["modelName"]= "TransUNet"
-        self.cfg["inputSize"] = 256
+        self.cfg["model_name"]= "TransUNet"
+        self.cfg["input_size"] = 256
         self.cfg["patchSize"] = 16
-        self.cfg["maxIter"] = 1000
-        self.cfg["batchSize"] = 1
-        self.cfg["splitTrainTest"] = 90
+        self.cfg["max_iter"] = 1000
+        self.cfg["batch_size"] = 1
+        self.cfg["dataset_split_ratio"] = 90
         self.cfg["evalPeriod"] = 100
-        self.cfg["pretrain"] = True
-        self.cfg["outputFolder"] = ""
-        self.cfg["baseLearningRate"] = 0.01
-        self.cfg["expertMode"] = ""
+        self.cfg["use_pretrain"] = True
+        self.cfg["output_folder"] = ""
+        self.cfg["learning_rate"] = 0.01
+        self.cfg["config"] = ""
         self.cfg["earlyStopping"] = False
         self.cfg["patience"] = -1
 
     def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
-        self.cfg["inputSize"] = int(param_map["inputSize"])
+        self.cfg["input_size"] = int(param_map["input_size"])
         self.cfg["patchSize"] = int(param_map["patchSize"])
-        self.cfg["maxIter"] = int(param_map["maxIter"])
-        self.cfg["batchSize"] = int(param_map["batchSize"])
-        self.cfg["splitTrainTest"] = int(param_map["splitTrainTest"])
+        self.cfg["max_iter"] = int(param_map["max_iter"])
+        self.cfg["batch_size"] = int(param_map["batch_size"])
+        self.cfg["dataset_split_ratio"] = int(param_map["dataset_split_ratio"])
         self.cfg["evalPeriod"] = int(param_map["evalPeriod"])
-        self.cfg["outputFolder"] = param_map["outputFolder"]
-        self.cfg["baseLearningRate"] = float(param_map["baseLearningRate"])
-        self.cfg["pretrain"] = utils.strtobool(param_map["pretrain"])
-        self.cfg["expertMode"] = param_map["expertMode"]
+        self.cfg["output_folder"] = param_map["output_folder"]
+        self.cfg["learning_rate"] = float(param_map["learning_rate"])
+        self.cfg["use_pretrain"] = utils.strtobool(param_map["use_pretrain"])
+        self.cfg["config"] = param_map["config"]
         self.cfg["earlyStopping"] = utils.strtobool(param_map["earlyStopping"])
         self.cfg["patience"] = int(param_map["patience"])
 
@@ -93,7 +93,7 @@ class TrainTransunet(dnntrain.TrainProcess):
         # This is handled by the main progress bar of Ikomia application
         param = self.get_param_object()
         if param is not None:
-            return param.cfg["maxIter"]
+            return param.cfg["max_iter"]
         else:
             return 1
 
@@ -142,7 +142,7 @@ class TrainTransunet(dnntrain.TrainProcess):
 
         # Get parameters :
         param = self.get_param_object()
-        expert_mode = param.cfg["expertMode"]
+        expert_mode = param.cfg["config"]
         # current datetime is used as folder name
         str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
 
@@ -157,12 +157,12 @@ class TrainTransunet(dnntrain.TrainProcess):
         else:
             config_vit = CONFIGS_ViT_seg['R50-ViT-B_16']
             config_vit.pretrained_path = pretrained_path
-            config_vit.batch_size = param.cfg["batchSize"]
-            config_vit.img_size = param.cfg["inputSize"]
-            config_vit.max_iter = param.cfg["maxIter"]
-            config_vit.split_train_test = param.cfg["splitTrainTest"] / 100
+            config_vit.batch_size = param.cfg["batch_size"]
+            config_vit.img_size = param.cfg["input_size"]
+            config_vit.max_iter = param.cfg["max_iter"]
+            config_vit.split_train_test = param.cfg["dataset_split_ratio"] / 100
             config_vit.eval_period = param.cfg["evalPeriod"]
-            config_vit.base_lr = param.cfg["baseLearningRate"]
+            config_vit.base_lr = param.cfg["learning_rate"]
             config_vit.patch_size = 16
             config_vit.n_classes = num_classes
             config_vit.freeze_backbone = True
@@ -174,8 +174,8 @@ class TrainTransunet(dnntrain.TrainProcess):
             config_vit.warmup_factor = None
             #config_vit.warmup_factor = 0.001
             config_vit.patience = param.cfg["patience"]
-            if os.path.isdir(param.cfg["outputFolder"]):
-                output_path = os.path.join(param.cfg["outputFolder"], str_datetime)
+            if os.path.isdir(param.cfg["output_folder"]):
+                output_path = os.path.join(param.cfg["output_folder"], str_datetime)
             else:
                 output_path = os.path.join(dir_path, "output", str_datetime)
 
@@ -203,7 +203,7 @@ class TrainTransunet(dnntrain.TrainProcess):
                 model.load_from(weights=pretrained_dict)
 
             tb_logdir = os.path.join(core.config.main_cfg["tensorboard"]["log_uri"],
-                                     param.cfg["modelName"],
+                                     param.cfg["model_name"],
                                      str_datetime)
             tb_writer = SummaryWriter(tb_logdir)
 
