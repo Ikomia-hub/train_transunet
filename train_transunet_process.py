@@ -52,7 +52,7 @@ class TrainTransunetParam(TaskParam):
         self.cfg["use_pretrain"] = True
         self.cfg["output_folder"] = ""
         self.cfg["learning_rate"] = 0.01
-        self.cfg["config"] = ""
+        self.cfg["config_file"] = ""
         self.cfg["earlyStopping"] = False
         self.cfg["patience"] = -1
 
@@ -68,7 +68,7 @@ class TrainTransunetParam(TaskParam):
         self.cfg["output_folder"] = param_map["output_folder"]
         self.cfg["learning_rate"] = float(param_map["learning_rate"])
         self.cfg["use_pretrain"] = utils.strtobool(param_map["use_pretrain"])
-        self.cfg["config"] = param_map["config"]
+        self.cfg["config_file"] = param_map["config_file"]
         self.cfg["earlyStopping"] = utils.strtobool(param_map["earlyStopping"])
         self.cfg["patience"] = int(param_map["patience"])
 
@@ -142,7 +142,7 @@ class TrainTransunet(dnntrain.TrainProcess):
 
         # Get parameters :
         param = self.get_param_object()
-        expert_mode = param.cfg["config"]
+        expert_mode = param.cfg["config_file"]
         # current datetime is used as folder name
         str_datetime = datetime.now().strftime("%d-%m-%YT%Hh%Mm%Ss")
 

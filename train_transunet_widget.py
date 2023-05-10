@@ -121,7 +121,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
                                                               mode=QFileDialog.Directory)
 
         self.browse_expert_mode = pyqtutils.append_browse_file(self.gridLayout, label="Advanced yaml config",
-                                                               path=self.parameters.cfg["config"],
+                                                               path=self.parameters.cfg["config_file"],
                                                                tooltip="Select yaml file",
                                                                mode=QFileDialog.ExistingFile)
 
@@ -145,7 +145,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.parameters.cfg["dataset_split_ratio"] = self.splitTrainTestSpinBox.value()
         self.parameters.cfg["output_folder"] = self.browse_out_folder.path
         self.parameters.cfg["learning_rate"] = self.baseLearningRateSpinBox.value()
-        self.parameters.cfg["config"] = self.browse_expert_mode.path
+        self.parameters.cfg["config_file"] = self.browse_expert_mode.path
         self.parameters.cfg["earlyStopping"] = self.earlyStoppingCheckBox.isChecked()
         if self.earlyStoppingCheckBox.isChecked():
             self.parameters.cfg["patience"] = self.patienceSpinBox.value()
