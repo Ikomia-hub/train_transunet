@@ -21,7 +21,7 @@
 
 Training process for TransUNet model. This algorithm can train TransUNet model for semantic segmentation. 
 
-[Medical TranUnet illustration](https://149695847.v2.pressablecdn.com/wp-content/uploads/2021/03/pasted-image-0-11.png)
+![Medical TranUnet illustration](https://149695847.v2.pressablecdn.com/wp-content/uploads/2021/03/pasted-image-0-11.png)
 
 
 ## :rocket: Use with Ikomia API
