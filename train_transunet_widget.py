@@ -66,16 +66,16 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.splitTrainTestSpinBox.setSingleStep(1)
         self.splitTrainTestSpinBox.setValue(self.parameters.cfg["dataset_split_ratio"])
 
-        evalPeriodLabel = QLabel("Evaluation period:")
-        self.evalPeriodSpinBox = QSpinBox()
-        self.evalPeriodSpinBox.setRange(0, 2147483647)
-        self.evalPeriodSpinBox.setSingleStep(1)
-        self.evalPeriodSpinBox.setValue(self.parameters.cfg["evalPeriod"])
+        eval_periodLabel = QLabel("Evaluation period:")
+        self.eval_periodSpinBox = QSpinBox()
+        self.eval_periodSpinBox.setRange(0, 2147483647)
+        self.eval_periodSpinBox.setSingleStep(1)
+        self.eval_periodSpinBox.setValue(self.parameters.cfg["eval_period"])
 
-        earlyStoppingLabel = QLabel("Early stopping:")
-        self.earlyStoppingCheckBox = QCheckBox()
-        self.earlyStoppingCheckBox.setChecked(self.parameters.cfg["earlyStopping"])
-        self.earlyStoppingCheckBox.clicked.connect(self.showPatienceSpinBox)
+        early_stoppingLabel = QLabel("Early stopping:")
+        self.early_stoppingCheckBox = QCheckBox()
+        self.early_stoppingCheckBox.setChecked(self.parameters.cfg["early_stopping"])
+        self.early_stoppingCheckBox.clicked.connect(self.showPatienceSpinBox)
 
         baseLearningRateLabel = QLabel("Base learning rate:")
         self.baseLearningRateSpinBox = QDoubleSpinBox()
@@ -89,7 +89,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.patienceSpinBox.setRange(0, 2147483647)
         self.patienceSpinBox.setSingleStep(1)
         self.patienceSpinBox.setValue(self.parameters.cfg["patience"])
-        if self.earlyStoppingCheckBox.isChecked():
+        if self.early_stoppingCheckBox.isChecked():
             self.patienceLabel.show()
             self.patienceSpinBox.show()
         else:
@@ -105,12 +105,12 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.gridLayout.addWidget(self.batchSizeSpinBox, 2, 1, 1, 2)
         self.gridLayout.addWidget(splitTrainTestLabel, 3, 0, 1, 1)
         self.gridLayout.addWidget(self.splitTrainTestSpinBox, 3, 1, 1, 2)
-        self.gridLayout.addWidget(evalPeriodLabel, 4, 0, 1, 1)
-        self.gridLayout.addWidget(self.evalPeriodSpinBox, 4, 1, 1, 2)
+        self.gridLayout.addWidget(eval_periodLabel, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.eval_periodSpinBox, 4, 1, 1, 2)
         self.gridLayout.addWidget(baseLearningRateLabel, 5, 0, 1, 1)
         self.gridLayout.addWidget(self.baseLearningRateSpinBox, 5, 1, 1, 2)
-        self.gridLayout.addWidget(earlyStoppingLabel,6,0,1,1)
-        self.gridLayout.addWidget(self.earlyStoppingCheckBox,6,1,1,2)
+        self.gridLayout.addWidget(early_stoppingLabel,6,0,1,1)
+        self.gridLayout.addWidget(self.early_stoppingCheckBox,6,1,1,2)
         self.gridLayout.addWidget(self.patienceLabel,7,0,1,1)
         self.gridLayout.addWidget(self.patienceSpinBox,7,1,1,2)
 
@@ -128,7 +128,7 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.set_layout(layout_ptr)
 
     def showPatienceSpinBox(self):
-        if self.earlyStoppingCheckBox.isChecked():
+        if self.early_stoppingCheckBox.isChecked():
             self.patienceLabel.show()
             self.patienceSpinBox.show()
         else:
@@ -141,13 +141,13 @@ class TrainTransunetWidget(core.CWorkflowTaskWidget):
         self.parameters.cfg["input_size"] = self.inputSizeSpinBox.value()
         self.parameters.cfg["batch_size"] = self.batchSizeSpinBox.value()
         self.parameters.cfg["max_iter"] = self.maxIterSpinBox.value()
-        self.parameters.cfg["evalPeriod"] = self.evalPeriodSpinBox.value()
+        self.parameters.cfg["eval_period"] = self.eval_periodSpinBox.value()
         self.parameters.cfg["dataset_split_ratio"] = self.splitTrainTestSpinBox.value()
         self.parameters.cfg["output_folder"] = self.browse_out_folder.path
         self.parameters.cfg["learning_rate"] = self.baseLearningRateSpinBox.value()
         self.parameters.cfg["config_file"] = self.browse_expert_mode.path
-        self.parameters.cfg["earlyStopping"] = self.earlyStoppingCheckBox.isChecked()
-        if self.earlyStoppingCheckBox.isChecked():
+        self.parameters.cfg["early_stopping"] = self.early_stoppingCheckBox.isChecked()
+        if self.early_stoppingCheckBox.isChecked():
             self.parameters.cfg["patience"] = self.patienceSpinBox.value()
         else:
             self.parameters.cfg["patience"] = -1

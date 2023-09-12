@@ -44,32 +44,32 @@ class TrainTransunetParam(TaskParam):
         # Place default value initialization here
         self.cfg["model_name"]= "TransUNet"
         self.cfg["input_size"] = 256
-        self.cfg["patchSize"] = 16
+        self.cfg["patch_size"] = 16
         self.cfg["max_iter"] = 1000
         self.cfg["batch_size"] = 1
         self.cfg["dataset_split_ratio"] = 90
-        self.cfg["evalPeriod"] = 100
+        self.cfg["eval_period"] = 100
         self.cfg["use_pretrain"] = True
         self.cfg["output_folder"] = ""
         self.cfg["learning_rate"] = 0.01
         self.cfg["config_file"] = ""
-        self.cfg["earlyStopping"] = False
+        self.cfg["early_stopping"] = False
         self.cfg["patience"] = -1
 
     def set_values(self, param_map):
         # Set parameters values from Ikomia application
         # Parameters values are stored as string and accessible like a python dict
         self.cfg["input_size"] = int(param_map["input_size"])
-        self.cfg["patchSize"] = int(param_map["patchSize"])
+        self.cfg["patch_size"] = int(param_map["patch_size"])
         self.cfg["max_iter"] = int(param_map["max_iter"])
         self.cfg["batch_size"] = int(param_map["batch_size"])
         self.cfg["dataset_split_ratio"] = int(param_map["dataset_split_ratio"])
-        self.cfg["evalPeriod"] = int(param_map["evalPeriod"])
+        self.cfg["eval_period"] = int(param_map["eval_period"])
         self.cfg["output_folder"] = param_map["output_folder"]
         self.cfg["learning_rate"] = float(param_map["learning_rate"])
         self.cfg["use_pretrain"] = utils.strtobool(param_map["use_pretrain"])
         self.cfg["config_file"] = param_map["config_file"]
-        self.cfg["earlyStopping"] = utils.strtobool(param_map["earlyStopping"])
+        self.cfg["early_stopping"] = utils.strtobool(param_map["early_stopping"])
         self.cfg["patience"] = int(param_map["patience"])
 
 
@@ -161,7 +161,7 @@ class TrainTransunet(dnntrain.TrainProcess):
             config_vit.img_size = param.cfg["input_size"]
             config_vit.max_iter = param.cfg["max_iter"]
             config_vit.split_train_test = param.cfg["dataset_split_ratio"] / 100
-            config_vit.eval_period = param.cfg["evalPeriod"]
+            config_vit.eval_period = param.cfg["eval_period"]
             config_vit.base_lr = param.cfg["learning_rate"]
             config_vit.patch_size = 16
             config_vit.n_classes = num_classes
