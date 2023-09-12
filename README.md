@@ -19,10 +19,10 @@
     </a> 
 </p>
 
-Training process for TransUNet model. This Ikomia plugin can train TransUNet model for semantic segmantation. Most common parameters are exposed in the settings window. For expert usage, it is also possible to select a custom configuration file.To start your training:create a new workflow, add a task node loading your dataset in Ikomia format (consult the marketplace to check if a suitable dataset loader already exists), add this TransUNet train task, adjust parameters, and click apply to start the training. You are able to monitor your training runs through the TensorBoard dashboard. Compared to original paper, image preprocessing has been changed to match ResNet trained on ImageNet image preprocessing.
+Training process for TransUNet model. This algorithm can train TransUNet model for semantic segmentation. 
 
-[Insert illustrative image here. Image must be accessible publicly, in algorithm Github repository for example.
-<img src="images/illustration.png"  alt="Illustrative image" width="30%" height="30%">]
+[Medical TranUnet illustration](https://149695847.v2.pressablecdn.com/wp-content/uploads/2021/03/pasted-image-0-11.png)
+
 
 ## :rocket: Use with Ikomia API
 
@@ -36,20 +36,26 @@ pip install ikomia
 
 #### 2. Create your workflow
 
-[Change the sample image URL to fit algorithm purpose]
-
 ```python
-import ikomia
 from ikomia.dataprocess.workflow import Workflow
 
 # Init your workflow
-wf = Workflow()
+wf = Workflow()    
 
-# Add algorithm
-algo = wf.add_task(name="train_transunet", auto_connect=True)
+# Add dataset loader
+coco = wf.add_task(name="dataset_coco")
 
-# Run on your image  
-wf.run_on(url="example_image.png")
+coco.set_parameters({
+    "json_file": "path/to/json/annotation/file",
+    "image_folder": "path/to/image/folder",
+    "task": "semantic_segmentation",
+}) 
+
+# Add training algorithm
+train = wf.add_task(name="train_transunet", auto_connect=True)
+
+# Launch your training on your data
+wf.run()
 ```
 
 ## :sunny: Use with Ikomia Studio
@@ -62,56 +68,53 @@ Ikomia Studio offers a friendly UI with the same features as the API.
 
 ## :pencil: Set algorithm parameters
 
-[Explain each algorithm parameters]
 
-[Change the sample image URL to fit algorithm purpose]
+- **input_size** (int) - default '256': Size of the input image.
+- **epochs** (int) - default '15': Number of complete passes through the training dataset.
+- **batch_size** (int) - default '1': Number of samples processed before the model is updated.
+- **learning_rate** (float) - default '0.01': Step size at which the model's parameters are updated during training.
+- **output_folder** (str, *optional*): path to where the model will be saved. 
+- **num_workers** (int) - default '0': How many parallel subprocesses you want to activate when you are loading all your data during your training or validation. 
+- **weight_decay** (float) - default '1e-4': Amount of weight decay, regularization method.
+- **eval_period** (int) - default '100: Interval between evaluations.  
+- **max_iter** (int) - default '1000': Maximum number of iterations. 
+- **early_stopping** (bool) - default 'False': Activate early stopping callback to avoid over fitting.
+- **dataset_split_ratio** (int) – default '90' ]0, 100[: Divide the dataset into train and evaluation sets.
+- **patch_size** (int) - default '16':  Path size of the ViT model.
+
+
+**Parameters** should be in **strings format**  when added to the dictionary.
+
 
 ```python
-import ikomia
 from ikomia.dataprocess.workflow import Workflow
 
 # Init your workflow
-wf = Workflow()
+wf = Workflow()    
 
-# Add algorithm
-algo = wf.add_task(name="train_transunet", auto_connect=True)
+# Add dataset loader
+coco = wf.add_task(name="dataset_coco")
 
-algo.set_parameters({
-    "param1": "value1",
-    "param2": "value2",
-    ...
-})
+coco.set_parameters({
+    "json_file": "path/to/json/annotation/file",
+    "image_folder": "path/to/image/folder",
+    "task": "semantic_segmentation",
+}) 
 
-# Run on your image  
-wf.run_on(url="example_image.png")
+# Add training algorithm
+train = wf.add_task(name="train_transunet", auto_connect=True)
+train.set_parameters({
+    "batch_size": "1",
+    "max_iter": "1000",
+    "input_size": "256",
+    "patch_size": "16",
+    "dataset_split_ratio": "5",
+    "eval_period": "50",
+    "learning_rate": "0.01",
+    "early_stopping": "False"
+}) 
 
+# Launch your training on your data
+wf.run()
 ```
 
-## :mag: Explore algorithm outputs
-
-Every algorithm produces specific outputs, yet they can be explored them the same way using the Ikomia API. For a more in-depth understanding of managing algorithm outputs, please refer to the [documentation](https://ikomia-dev.github.io/python-api-documentation/advanced_guide/IO_management.html).
-
-```python
-import ikomia
-from ikomia.dataprocess.workflow import Workflow
-
-# Init your workflow
-wf = Workflow()
-
-# Add algorithm
-algo = wf.add_task(name="train_transunet", auto_connect=True)
-
-# Run on your image  
-wf.run_on(url="example_image.png")
-
-# Iterate over outputs
-for output in algo.get_outputs()
-    # Print information
-    print(output)
-    # Export it to JSON
-    output.to_json()
-```
-
-## :fast_forward: Advanced usage 
-
-[optional]
