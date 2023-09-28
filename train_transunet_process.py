@@ -239,20 +239,6 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         # Set process information as string here
         self.info.name = "train_transunet"
         self.info.short_description = "Training process for TransUNet model. "
-        self.info.description = "Training process for TransUNet model. " \
-                                "This Ikomia plugin can train TransUNet model for semantic segmantation. " \
-                                "Most common parameters are exposed in the settings window. For expert usage, " \
-                                "it is also possible to select a custom configuration file." \
-                                "To start your training:" \
-                                "create a new workflow, " \
-                                "add a task node loading your dataset in Ikomia format " \
-                                "(consult the marketplace to check if a suitable dataset loader already exists), " \
-                                "add this TransUNet train task, " \
-                                "adjust parameters, " \
-                                "and click apply to start the training. " \
-                                "You are able to monitor your training runs through the TensorBoard dashboard. " \
-                                "Compared to original paper, image preprocessing has been changed to match " \
-                                "ResNet trained on ImageNet image preprocessing."
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Segmentation"
         self.info.version = "1.0.0"
@@ -266,7 +252,8 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         # URL of documentation
         self.info.documentation_link = "https://arxiv.org/abs/2102.04306"
         # Code source repository
-        self.info.repository = "https://github.com/Beckschen/TransUNet"
+        self.info.repository = "https://github.com/Ikomia-hub/train_transunet"
+        self.info.original_repository = "https://github.com/Beckschen/TransUNet"
         # Keywords used for search
         self.info.keywords = "semantic, segmentation, encoder, decoder, Transformers, U-Net "
 
