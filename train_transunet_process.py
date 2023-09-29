@@ -255,7 +255,9 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         self.info.repository = "https://github.com/Ikomia-hub/train_transunet"
         self.info.original_repository = "https://github.com/Beckschen/TransUNet"
         # Keywords used for search
-        self.info.keywords = "semantic, segmentation, encoder, decoder, Transformers, U-Net "
+        self.info.keywords = "semantic, segmentation, encoder, decoder, Transformers, U-Net"
+        self.info.algo_type = core.AlgoType.TRAIN
+        self.info.algo_tasks = "SEMANTIC_SEGMENTATION"
 
     def create(self, param=None):
         # Create process object
