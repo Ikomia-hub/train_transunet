@@ -241,7 +241,7 @@ class TrainTransunetFactory(dataprocess.CTaskFactory):
         self.info.short_description = "Training process for TransUNet model. "
         # relative path -> as displayed in Ikomia application process tree
         self.info.path = "Plugins/Python/Segmentation"
-        self.info.version = "1.0.0"
+        self.info.version = "1.0.1"
         # self.info.icon_path = "your path to a specific icon"
         self.info.icon_path = "icons/transunet.png"
         self.info.authors = "Jieneng Chen, Yongyi Lu, Qihang Yu, Xiangde Luo,Ehsan Adeli, Yan Wang, Le Lu, Alan L. Yuille, and Yuyin Zhou"
